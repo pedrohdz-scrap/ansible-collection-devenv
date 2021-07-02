@@ -1,0 +1,51 @@
+---
+# -----------------------------------------------------------------------------
+# Unminimize Ubuntu
+# -----------------------------------------------------------------------------
+- name: Ensure unminimized Ubuntu installation.
+  ansible.builtin.shell:
+    cmd: yes | /usr/local/sbin/unminimize
+    removes: /etc/update-motd.d/60-unminimize
+  tags:
+    - avinode_devenv_packages
+  when:
+    - avinode_devenv_packages_unminimize_ubuntu
+    - (ansible_distribution | lower) == 'ubuntu'
+
+
+# -----------------------------------------------------------------------------
+# Install and uninstall
+# -----------------------------------------------------------------------------
+- name: Ensure uninstalled Apt packages.
+  ansible.builtin.apt:
+    install_recommends: false
+    name: '{{ _packages_absent }}'
+    state: absent
+    update_cache: false
+  become: '{{ avinode_devenv_become_for_all }}'
+  tags:
+    - avinode_devenv_packages
+
+- name: Ensure installed Apt packages.
+  ansible.builtin.apt:
+    cache_valid_time: '{{ avinode_devenv_packages_cache_valid_time }}'
+    install_recommends: false
+    name: '{{ _packages_present }}'
+    state: present
+    update_cache: '{{ avinode_devenv_packages_update_cache }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  tags:
+    - avinode_devenv_packages
+
+
+- name: Ensure Apt alternative selection.
+  community.general.alternatives:
+    name: '{{ item[0] }}'
+    path: '{{ item[1] }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _packages_alternatives }}'
+  loop_control:
+    label: '{{ item[0] }} ▶ {{ item[1] }}'
+  tags:
+    - avinode_devenv_packages
+...

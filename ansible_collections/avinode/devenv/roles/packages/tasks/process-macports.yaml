@@ -1,0 +1,73 @@
+---
+# - name: Update packages cache
+#   community.general.macports:
+#     selfupdate: true
+#     upgrade: false
+#   become: '{{ avinode_devenv_become_for_all }}'
+#   when: avinode_devenv_packages_update_cache
+#
+# - name: Upgrade installed packages
+#   community.general.macports:
+#     selfupdate: false
+#     upgrade: true
+#   become: '{{ avinode_devenv_become_for_all }}'
+#   when: avinode_devenv_packages_upgrade_installed
+
+- name: Ensure absent Macports ports.
+  community.general.macports:
+    name: '{{ _packages_absent }}'
+    selfupdate: false
+    state: absent
+    upgrade: false
+  become: '{{ avinode_devenv_become_for_all }}'
+  tags:
+    - avinode_devenv_packages
+
+- name: Ensure present Macports ports.
+  community.general.macports:
+    name: '{{ _packages_present }}'
+    selfupdate: false
+    state: present
+    upgrade: false
+  become: '{{ avinode_devenv_become_for_all }}'
+  tags:
+    - avinode_devenv_packages
+
+- name: Ensure present Macport variants.
+  community.general.macports:
+    name: '{{ item[0] }}'
+    variant: '{{ item[1] }}'
+    selfupdate: false
+    state: present
+    upgrade: false
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _packages_macport_variants }}'
+  loop_control:
+    label: '{{ item[0] }} ▶ {{ item[1] }}'
+  tags:
+    - avinode_devenv_packages
+
+- name: Ensure Macport selections.
+  ansible.builtin.shell: |
+    set -o pipefail
+    set -o errexit
+    set -o nounset
+    current=$(port select --show {{ _packages_macport_group }} | sed -e "s/.*is '\(.*\)'\./\1/")
+    if [ "$current" != '{{ _packages_macport_version }}' ]; then
+      port select --set {{ _packages_macport_group }} {{ _packages_macport_version }} > /dev/null
+      echo 'CHANGED'
+    else
+      echo 'UNCHANGED'
+    fi
+  become: '{{ avinode_devenv_become_for_all }}'
+  changed_when: _packages_macport_select_shell.stdout == "CHANGED"
+  loop: '{{ _packages_alternatives }}'
+  register: _packages_macport_select_shell
+  vars:
+    _packages_macport_group: '{{ item[0] }}'
+    _packages_macport_version: '{{ item[1] }}'
+  loop_control:
+    label: '{{ item[0] }} ▶ {{ item[1] }}'
+  tags:
+    - avinode_devenv_packages
+...

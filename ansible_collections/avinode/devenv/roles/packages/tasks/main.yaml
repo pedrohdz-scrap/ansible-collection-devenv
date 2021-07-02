@@ -1,0 +1,76 @@
+---
+# -----------------------------------------------------------------------------
+# Setup
+# -----------------------------------------------------------------------------
+- name: Set distribution to package manager map fact.
+  ansible.builtin.set_fact:
+    _packages_dist_pkg_mgr_map:
+      # When adding a new mapping, remember to ad the default value to
+      # defaults/main.yaml.
+      # {DIST_NAME}: '{{ avinode_devenv_packages_{DIST_NAME}_pkg_mgr }}'
+      MacOSX: '{{ avinode_devenv_packages_macosx_pkg_mgr }}'
+  tags:
+    - avinode_devenv_packages
+
+- name: Set package manager according to distribution.
+  ansible.builtin.set_fact:
+    _packages_dist_pkg_mgr: >-
+      {{
+        ((_packages_dist_pkg_mgr_map[ansible_distribution] | default("default")) == "default")
+            | ternary(ansible_pkg_mgr, _packages_dist_pkg_mgr_map[ansible_distribution])
+      }}
+  tags:
+    - avinode_devenv_packages
+
+- debug:
+    msg: The selected package manager is '{{ _packages_dist_pkg_mgr }}'.
+  tags:
+    - avinode_devenv_packages
+
+- name: Define packages to process.
+  ansible.builtin.set_fact:
+    _packages_present: '{{ avinode_devenv_packages | avinode.devenv.present_packages(_packages_dist_pkg_mgr) }}'
+    _packages_absent: '{{ avinode_devenv_packages | avinode.devenv.absent_packages(_packages_dist_pkg_mgr) }}'
+    _packages_macport_variants: '{{ avinode_devenv_packages | avinode.devenv.present_macport_variants(_packages_dist_pkg_mgr) }}'
+    _packages_alternatives: '{{ avinode_devenv_packages | avinode.devenv.alternatives(_packages_dist_pkg_mgr) }}'
+  tags:
+    - avinode_devenv_packages
+
+
+# -----------------------------------------------------------------------------
+# Process
+# -----------------------------------------------------------------------------
+- name: List of packages to process.
+  ansible.builtin.debug:
+    msg: |
+      Packages to ensure are absent:
+        {{ _packages_absent | join(" ") | default("NONE", true) | wordwrap(77) | indent(2) }}
+
+      Packages to ensure are present:
+        {{ _packages_present | join(" ") | default("NONE", true) | wordwrap(77) | indent(2) }}
+
+      Package alternative selections to ensure are present:
+        {{ _packages_alternatives | map('first') | join(" ") | default("NONE", true) | wordwrap(77) | indent(2) }}
+
+      {% if ansible_pkg_mgr == 'macports' -%}
+      Macport variants to ensure are present:
+        {{ _packages_macport_variants | map('join', '') | join(" ") | default("NONE", true) | wordwrap(77) | indent(2) }}
+      {%- endif -%}
+  tags:
+    - avinode_devenv_packages
+
+- include_tasks: process-macports.yaml
+  when: _packages_dist_pkg_mgr == 'macports'
+  tags:
+    - avinode_devenv_packages
+
+- include_tasks: process-brew.yaml
+  when: _packages_dist_pkg_mgr == 'brew'
+  tags:
+    - avinode_devenv_packages
+
+- include_tasks: process-apt.yaml
+  when: _packages_dist_pkg_mgr == 'apt'
+  tags:
+    - avinode_devenv_packages
+...
