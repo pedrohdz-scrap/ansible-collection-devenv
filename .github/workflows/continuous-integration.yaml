@@ -13,12 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Install latest version of Ansible in a Python venv
+        run: |
+          /usr/bin/python3 -m venv ${GITHUB_WORKSPACE}/.venv
+          ${GITHUB_WORKSPACE}/.venv/bin/pip3 install -U pip
+          ${GITHUB_WORKSPACE}/.venv/bin/pip3 install ansible
+          ${GITHUB_WORKSPACE}/.venv/bin/ansible --version
+
       - name: Sanity checks
         working-directory: ansible_collections/avinode/devenv/
-        run: ansible-test sanity --color --docker default
+        run: |
+          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test sanity --color --docker default
+
       - name: Unit tests
         working-directory: ansible_collections/avinode/devenv/
-        run: ansible-test units --color --docker default
+        run: |
+          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test units --color --docker default
 
   integration-test-linux:
     name: Linux integration tests
@@ -32,10 +43,18 @@ jobs:
           - ubuntu2004
     steps:
       - uses: actions/checkout@v2
+
+      - name: Install latest version of Ansible in a Python venv
+        run: |
+          /usr/bin/python3 -m venv ${GITHUB_WORKSPACE}/.venv
+          ${GITHUB_WORKSPACE}/.venv/bin/pip3 install -U pip
+          ${GITHUB_WORKSPACE}/.venv/bin/pip3 install ansible
+          ${GITHUB_WORKSPACE}/.venv/bin/ansible --version
+
       - name: Integration tests
         working-directory: ansible_collections/avinode/devenv/
         run: |
-          ansible-test integration --color \
+          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test integration --color \
             --docker ${{ matrix.IMAGE }} \
             --python-interpreter /usr/bin/python3
 
@@ -68,20 +87,20 @@ jobs:
         run: |
           echo PATH="$PATH"
 
-      - name: Install Ansible
+      - name: Install latest version of Ansible in a Python venv
         run: |
-          /usr/bin/python3 -m venv .venv
-          ./.venv/bin/pip3 install -U pip
-          ./.venv/bin/pip3 install ansible
+          /usr/bin/python3 -m venv ${GITHUB_WORKSPACE}/.venv
+          ${GITHUB_WORKSPACE}/.venv/bin/pip3 install -U pip
+          ${GITHUB_WORKSPACE}/.venv/bin/pip3 install ansible
+          ${GITHUB_WORKSPACE}/.venv/bin/ansible --version
 
       - name: Run Ansible integration tests
         working-directory: ansible_collections/avinode/devenv/
         run: |
-          ../../../.venv/bin/ansible-test integration \
+          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test integration \
               --allow-destructive \
               --allow-root \
               --color \
               --local \
               --python-interpreter /usr/bin/python3
-
 ...
