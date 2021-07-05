@@ -1,8 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from itertools import filterfalse
-from jinja2 import contextfilter
+from ansible.module_utils.six.moves import filterfalse
 
 
 def process_items(package_mgr, state_test, items):
@@ -57,8 +56,7 @@ def process_alternatives(package_mgr, items):
 
 def process_alternatives_item(package_mgr):
     def _func(item):
-        return [(_k, _v) for _k, _v
-                in item[package_mgr]['alternatives'].items()]
+        return item[package_mgr]['alternatives'].items()
     return _func
 
 
