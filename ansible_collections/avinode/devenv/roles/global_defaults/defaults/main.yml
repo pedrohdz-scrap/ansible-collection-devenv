@@ -5,4 +5,9 @@ avinode_devenv_prefix: /opt/devenv
 
 avinode_devenv_packages_cache_valid_time: 1800
 avinode_devenv_packages_update_cache: false
+
+
+# FIXME!!
+avinode_devenv_go_arch: amd64
+avinode_devenv_go_platform: darwin
 ...

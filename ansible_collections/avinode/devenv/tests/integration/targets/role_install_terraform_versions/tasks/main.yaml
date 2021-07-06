@@ -1,0 +1,125 @@
+---
+- name: Ensure unzip is installed.
+  ansible.builtin.apt:
+    cache_valid_time: 86400  # 24 hours
+    name: unzip
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'Debian'
+
+- name: Testing 'avinode.devenv.install_terraform_versions'
+  block:
+    # -------------------------------------------------------------------------
+    # Arrange
+    # -------------------------------------------------------------------------
+    - name: Create temporary test directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: .terraform-FIXME
+      register: _tmp_test_dir
+    - set_fact:
+        avinode_devenv_prefix: '{{ _tmp_test_dir.path }}'
+    - include_role:
+        name: avinode.devenv.baseline
+
+    # -------------------------------------------------------------------------
+    # Test install
+    # -------------------------------------------------------------------------
+    - name: Executing `install_terraform_versions` to test installs
+      import_role:
+        name: avinode.devenv.install_terraform_versions
+      vars:
+        install_terraform_versions:
+          absent: []
+          absent_symlinks: []
+          installed:
+            - '0.14.7'
+            - '1.0.1'
+          symlinks:
+            terraform0.14: '0.14.7'
+            terraform1: '1.0.1'
+            terraform: '1.0.1'
+
+    - name: Test that bins have been installed.
+      include_tasks: test_bin_installed.yaml
+      vars:
+        test_file: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      loop:
+        - terraform
+        - terraform0.14
+        - terraform0.14.7
+        - terraform1
+        - terraform1.0.1
+
+    - name: Test that BASH completions have been installed.
+      include_tasks: test_bash_completion_installed.yaml
+      vars:
+        test_file: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}'
+      loop:
+        - terraform
+        - terraform0.14
+        - terraform0.14.7
+        - terraform1
+        - terraform1.0.1
+
+    # -------------------------------------------------------------------------
+    # Test uninstall
+    # -------------------------------------------------------------------------
+    - name: Executing `install_terraform_versions` to test uninstalls
+      include_role:
+        name: avinode.devenv.install_terraform_versions
+      vars:
+        install_terraform_versions:
+          absent:
+            - '0.14.7'
+          absent_symlinks:
+            - terraform0.14
+          installed: []
+          symlinks: {}
+
+    # Check that files have been removed.
+    - name: Test that bins are uninstalled.
+      include_tasks: test_bin_uninstalled.yaml
+      vars:
+        test_file: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      loop:
+        - terraform0.14
+        - terraform0.14.7
+
+    - name: Test that BASH completions are uninstalled.
+      include_tasks: test_bash_completion_uninstalled.yaml
+      vars:
+        test_file: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      loop:
+        - terraform0.14
+        - terraform0.14.7
+
+    # Check that originals are still in place.
+    - name: Test that original bins are still there.
+      include_tasks: test_bin_installed.yaml
+      vars:
+        test_file: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      loop:
+        - terraform
+        - terraform1
+        - terraform1.0.1
+
+    - name: Test that original BASH completions are still there.
+      include_tasks: test_bash_completion_installed.yaml
+      vars:
+        test_file: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}'
+      loop:
+        - terraform
+        - terraform1
+        - terraform1.0.1
+
+  always:
+    - name: Delete temporary test directory
+      ansible.builtin.file:
+        path: '{{ _tmp_test_dir.path }}'
+        state: absent
+  vars:
+    avinode_devenv_become_for_all: false
+    avinode_devenv_default_group: '{{ ansible_user_gid }}'
+    avinode_devenv_default_owner: '{{ ansible_user_id }}'
+...

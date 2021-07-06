@@ -7,10 +7,14 @@
 - name: Include OS family specific variables (Debian).
   include_vars: darwin.yaml
   when: ansible_os_family == 'Darwin'
+  tags:
+    - avinode_devenv_global_defaults
 
 - name: Include OS family specific variables (Debian).
   include_vars: debian.yaml
   when: ansible_os_family == 'Debian'
+  tags:
+    - avinode_devenv_global_defaults
 
 
 # -----------------------------------------------------------------------------
@@ -20,19 +24,27 @@
   ansible.builtin.set_fact:
     avinode_devenv_default_group: '{{ __avinode_devenv_default_group }}'
   when: avinode_devenv_default_group is not defined
+  tags:
+    - avinode_devenv_global_defaults
 
 - name: Define avinode_devenv_default_directory_mode.
   ansible.builtin.set_fact:
     avinode_devenv_default_directory_mode: '{{ __avinode_devenv_default_directory_mode }}'
   when: avinode_devenv_default_directory_mode is not defined
+  tags:
+    - avinode_devenv_global_defaults
 
 - name: Define avinode_devenv_default_owner.
   ansible.builtin.set_fact:
     avinode_devenv_default_owner: '{{ __avinode_devenv_default_owner }}'
   when: avinode_devenv_default_owner is not defined
+  tags:
+    - avinode_devenv_global_defaults
 
 - name: Define avinode_devenv_python_path.
   ansible.builtin.set_fact:
     avinode_devenv_python_path: '{{ __avinode_devenv_python_path }}'
   when: avinode_devenv_python_path is not defined
+  tags:
+    - avinode_devenv_global_defaults
 ...

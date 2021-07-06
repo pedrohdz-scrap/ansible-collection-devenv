@@ -1,0 +1,60 @@
+---
+- name: Check if Terraform binary exists ({{ version }})
+  ansible.builtin.stat:
+    path: '{{ bin_file }}'
+  register: _terraform_stat
+  tags:
+    - avinode_devenv_install_terraform
+
+- name: Check Terraform version ({{ version }})
+  changed_when: false
+  command: '{{ bin_file }} version'
+  failed_when: false
+  register: _terraform_version
+  tags:
+    - avinode_devenv_install_terraform
+
+- name: Install Terraform version
+  block:
+    - name: Create temporary build directory ({{ version }})
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: .terraform-{{ version }}
+      register: _tmp_dir
+
+    - name: Download Terraform zip file ({{ version }})
+      ansible.builtin.get_url:
+        checksum: sha256:https://releases.hashicorp.com/terraform/{{ version }}/terraform_{{ version }}_SHA256SUMS
+        dest: '{{ _tmp_dir.path }}'
+        mode: '0600'
+        url: https://releases.hashicorp.com/terraform/{{ version }}/terraform_{{ version }}_{{ go_platform }}_{{ go_arch }}.zip
+      register: _terraform_zip
+
+    - name: Unzip Terraform zip file ({{ version }})
+      ansible.builtin.unarchive:
+        dest: '{{ _tmp_dir.path }}'
+        mode: '0755'
+        remote_src: yes
+        src: '{{ _terraform_zip.dest }}'
+
+    - name: Copy Terraform executable to bin/ directory ({{ version }})
+      ansible.builtin.copy:
+        dest: '{{ bin_file }}'
+        group: '{{ avinode_devenv_default_group }}'
+        mode: '0755'
+        owner: '{{ avinode_devenv_default_owner }}'
+        remote_src: yes
+        src: '{{ _tmp_dir.path }}/terraform'
+      become: '{{ avinode_devenv_become_for_all }}'
+
+  always:
+    - name: Delete temporary build directory ({{ version }})
+      ansible.builtin.file:
+        path: '{{ _tmp_dir.path }}'
+        state: absent
+  when: >-
+    not _terraform_stat.stat.exists
+      or 'Terraform v' + version not in _terraform_version.stdout
+  tags:
+    - avinode_devenv_install_terraform
+...

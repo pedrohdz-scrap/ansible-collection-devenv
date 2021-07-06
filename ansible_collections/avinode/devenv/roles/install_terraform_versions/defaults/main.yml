@@ -1,0 +1,17 @@
+---
+install_terraform_versions:
+  absent: []
+    # - '0.12.29'
+  installed: []
+    # - '0.12.29'
+    # - '0.12.30'
+    # - '0.13.6'
+    # - '0.14.7'
+  absent_symlinks: []
+    # terraform0.12
+  symlinks: {}
+    # terraform: '0.12.29'
+    # terraform0.12: '0.12.29'
+    # terraform0.13: '0.13.6'
+    # terraform0.14: '0.14.7'
+...
