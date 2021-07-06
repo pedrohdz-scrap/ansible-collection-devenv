@@ -56,7 +56,7 @@ def process_alternatives(package_mgr, items):
 
 def process_alternatives_item(package_mgr):
     def _func(item):
-        return item[package_mgr]['alternatives'].items()
+        return list(item[package_mgr]['alternatives'].items())
     return _func
 
 
