@@ -1,9 +1,0 @@
----
-- name: Statting uninstalled file {{ test_file }}
-  stat:
-    path: '{{ test_file }}'
-  register: _bin_test_file_stats
-- name: Asserting uninstalled {{ test_file }}
-  assert:
-    that: not _bin_test_file_stats.stat.exists
-...
