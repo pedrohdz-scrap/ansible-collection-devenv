@@ -1,0 +1,8 @@
+# WARNING - This file is managed by Ansible.  Local changes will be lost.
+# Only a single version of kubectl can be used to setup BASH shell completions.
+# This is a little hacky, but it works for the most part.
+source <({{ executable_file }} completion bash)
+
+{% for target in target_executables | sort %}
+complete -F __start_kubectl {{ target }}
+{% endfor %}

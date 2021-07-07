@@ -1,0 +1,108 @@
+---
+#------------------------------------------------------------------------------
+# Remove requested items
+#------------------------------------------------------------------------------
+- name: Ensure kubectl versions absent
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/kubectl{{ _kubectl_item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_kubectl_versions.absent }}'
+  loop_control:
+    loop_var: _kubectl_item
+  when: install_kubectl_versions.absent is defined
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Ensure kubectl symlinks absent
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/{{ _kubectl_item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_kubectl_versions.absent_symlinks }}'
+  loop_control:
+    loop_var: _kubectl_item
+  when: install_kubectl_versions.absent_symlinks is defined
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Ensure absent bash completions for kubectl
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/{{ _item }}'
+    state: absent
+  vars:
+    executable_file: '{{ avinode_devenv_prefix }}/bin/{{ _item }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: >-
+    {{ (install_kubectl_versions.absent | map('regex_replace', '^(.*)$', 'kubectl\1'))
+        + install_kubectl_versions.absent_symlinks | list }}
+  loop_control:
+    loop_var: _item
+  tags:
+    - avinode_devenv_install_kubectl
+
+
+#------------------------------------------------------------------------------
+# Install
+#------------------------------------------------------------------------------
+- name: Ensure kubectl versions installed
+  include_tasks: process-install.yaml
+  vars:
+    bin_file: '{{ avinode_devenv_prefix }}/bin/kubectl{{ _kubectl_item }}'
+    go_arch: '{{ avinode_devenv_go_arch }}'
+    go_platform: '{{ avinode_devenv_go_platform }}'
+    version: '{{ _kubectl_item }}'
+  loop: '{{ install_kubectl_versions.installed }}'
+  loop_control:
+    loop_var: _kubectl_item
+  when: install_kubectl_versions.installed is defined
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Ensure kubectl symlinks
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/{{ _kubectl_item.key }}'
+    src: '{{ avinode_devenv_prefix }}/bin/kubectl{{ _kubectl_item.value }}'
+    state: link
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_kubectl_versions.symlinks | dict2items }}'
+  loop_control:
+    loop_var: _kubectl_item
+  when: install_kubectl_versions.symlinks is defined
+  tags:
+    - avinode_devenv_install_kubectl
+
+
+#------------------------------------------------------------------------------
+# Setup shell completions
+#------------------------------------------------------------------------------
+- name: Stat kubectl symlink/file
+  ansible.builtin.stat:
+    path: '{{ avinode_devenv_prefix }}/bin/kubectl'
+  register: _kubectl_symlink_stat
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Verify kubectl symlink exists
+  ansible.builtin.fail:
+    msg: A '{{ avinode_devenv_prefix }}/bin/kubectl' symlink must exists in order to configure BASH completions.
+  when: not _kubectl_symlink_stat.stat.exists
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Ensure bash completions for kubectl
+  ansible.builtin.template:
+    dest: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/kubectl'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0644'
+    owner: '{{ avinode_devenv_default_owner }}'
+    src: kubectl-completion.sh.j2
+  become: '{{ avinode_devenv_become_for_all }}'
+  vars:
+    executable_file: '{{ avinode_devenv_prefix }}/bin/kubectl'
+    target_executables: >-
+      {{ (install_kubectl_versions.installed | map('regex_replace', '^(.*)$', 'kubectl\1'))
+          + install_kubectl_versions.symlinks | list | reject('match', '^kubectl$') }}
+  tags:
+    - avinode_devenv_install_kubectl
+...

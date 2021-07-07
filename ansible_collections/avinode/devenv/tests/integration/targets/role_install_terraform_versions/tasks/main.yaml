@@ -15,7 +15,7 @@
     - name: Create temporary test directory
       ansible.builtin.tempfile:
         state: directory
-        suffix: .terraform-FIXME
+        suffix: .install-terraform-integration-tests
       register: _tmp_test_dir
     - set_fact:
         avinode_devenv_prefix: '{{ _tmp_test_dir.path }}'

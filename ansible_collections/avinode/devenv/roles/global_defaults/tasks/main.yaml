@@ -47,4 +47,55 @@
   when: avinode_devenv_python_path is not defined
   tags:
     - avinode_devenv_global_defaults
+
+
+# -----------------------------------------------------------------------------
+# Get GoLang settings
+# -----------------------------------------------------------------------------
+- name: Ensure golang is installed on Debian OS family.
+  ansible.builtin.apt:
+    cache_valid_time: 86400  # 24 hours
+    name: golang
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'Debian'
+  tags:
+    - avinode_devenv_global_defaults
+
+- name: Ensure golang is installed on MacOS via MacPorts.
+  community.general.macports:
+    name: go
+    state: present
+    selfupdate: false
+  when: ansible_os_family == 'Darwin'
+  tags:
+    - avinode_devenv_global_defaults
+# TODO - Add a HomeBrew option in a future release.
+
+- name: Fecth GOHOSTARCH.
+  ansible.builtin.shell: |
+    eval "$(go tool dist env)"; echo $GOHOSTARCH
+  register: __avinode_devenv_go_arch
+  tags:
+    - avinode_devenv_global_defaults
+- name: Define avinode_devenv_go_arch.
+  ansible.builtin.set_fact:
+    avinode_devenv_go_arch: '{{ __avinode_devenv_go_arch.stdout | trim }}'
+  when: avinode_devenv_go_arch is not defined
+  tags:
+    - avinode_devenv_global_defaults
+
+- name: Fecth GOOS.
+  ansible.builtin.shell: |
+    eval "$(go tool dist env)"; echo $GOOS
+  register: __avinode_devenv_go_platform
+  tags:
+    - avinode_devenv_global_defaults
+- name: Define avinode_devenv_go_platform.
+  ansible.builtin.set_fact:
+    avinode_devenv_go_platform: '{{ __avinode_devenv_go_platform.stdout | trim }}'
+  when: avinode_devenv_go_platform is not defined
+  tags:
+    - avinode_devenv_global_defaults
+    - avinode_devenv_global_defaults
 ...

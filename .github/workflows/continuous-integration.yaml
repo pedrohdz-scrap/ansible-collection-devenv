@@ -20,6 +20,9 @@ jobs:
           ${GITHUB_WORKSPACE}/.venv/bin/pip3 install -U pip
           ${GITHUB_WORKSPACE}/.venv/bin/pip3 install ansible
           ${GITHUB_WORKSPACE}/.venv/bin/ansible --version
+          cat galaxy.yml | ruby -r yaml -r json -e 'puts YAML.load($stdin.read).to_json' \
+              | jq -r '.dependencies | keys | .[]' \
+              | xargs -i ${GITHUB_WORKSPACE}/.venv/bin/ansible-galaxy collection install -p . '{}'
 
       - name: Sanity checks
         working-directory: ansible_collections/avinode/devenv/
@@ -50,6 +53,9 @@ jobs:
           ${GITHUB_WORKSPACE}/.venv/bin/pip3 install -U pip
           ${GITHUB_WORKSPACE}/.venv/bin/pip3 install ansible
           ${GITHUB_WORKSPACE}/.venv/bin/ansible --version
+          cat galaxy.yml | ruby -r yaml -r json -e 'puts YAML.load($stdin.read).to_json' \
+              | jq -r '.dependencies | keys | .[]' \
+              | xargs -i ${GITHUB_WORKSPACE}/.venv/bin/ansible-galaxy collection install -p . '{}'
 
       - name: Integration tests
         working-directory: ansible_collections/avinode/devenv/
@@ -93,6 +99,9 @@ jobs:
           ${GITHUB_WORKSPACE}/.venv/bin/pip3 install -U pip
           ${GITHUB_WORKSPACE}/.venv/bin/pip3 install ansible
           ${GITHUB_WORKSPACE}/.venv/bin/ansible --version
+          cat galaxy.yml | ruby -r yaml -r json -e 'puts YAML.load($stdin.read).to_json' \
+              | jq -r '.dependencies | keys | .[]' \
+              | xargs -i ${GITHUB_WORKSPACE}/.venv/bin/ansible-galaxy collection install -p . '{}'
 
       - name: Run Ansible integration tests
         working-directory: ansible_collections/avinode/devenv/

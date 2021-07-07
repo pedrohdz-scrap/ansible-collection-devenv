@@ -1,0 +1,39 @@
+---
+- name: Check if kubectl binary exists ({{ version }})
+  ansible.builtin.stat:
+    path: '{{ bin_file }}'
+  register: _kubectl_stat
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Check kubectl version ({{ version }})
+  changed_when: false
+  command: '{{ bin_file }} version --client=true --short=true'
+  failed_when: false
+  register: _kubectl_version
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Fetech kubectl checksum ({{ version }})
+  uri:
+    return_content: yes
+    url: https://dl.k8s.io/v{{ version }}/bin/{{ go_platform }}/{{ go_arch }}/kubectl.sha256
+  register: _kubectl_checksum
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Download kubectl ({{ version }})
+  ansible.builtin.get_url:
+    checksum: sha256:{{ _kubectl_checksum.content }}
+    dest: '{{ bin_file }}'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0755'
+    owner: '{{ avinode_devenv_default_owner }}'
+    url: https://dl.k8s.io/release/v{{ version }}/bin/{{ go_platform }}/{{ go_arch }}/kubectl
+  become: '{{ avinode_devenv_become_for_all }}'
+  when: >-
+    not _kubectl_stat.stat.exists
+      or 'kubectl v' + version not in _kubectl_version.stdout
+  tags:
+    - avinode_devenv_install_kubectl
+...

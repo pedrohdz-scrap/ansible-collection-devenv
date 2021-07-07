@@ -5,6 +5,10 @@ python3.9 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
 pip install ansible ansible-lint molecule[docker] yamllint
+
+cat galaxy.yml | ruby -r yaml -r json -e 'puts YAML.load($stdin.read).to_json' \
+    | jq -r '.dependencies | keys | .[]' \
+    | xargs -i ansible-galaxy collection install -p . '{}'
 ```
 
 Run tests:

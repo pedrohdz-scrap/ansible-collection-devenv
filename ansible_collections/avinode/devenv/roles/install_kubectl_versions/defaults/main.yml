@@ -1,0 +1,15 @@
+---
+install_kubectl_versions:
+  absent: []
+    # - '1.17.17'
+    # - '1.19.7'
+  installed: []
+    # - '1.17.17'
+    # - '1.19.7'
+  absent_symlinks: []
+    # kubectl1.19
+  symlinks: {}
+    # kubectl: '1.19.7'
+    # kubectl1.17: '1.17.17'
+    # kubectl1.19: '1.19.7'
+...
