@@ -58,6 +58,8 @@
     name: golang
     state: present
     update_cache: true
+  ignore_errors: true
+  become: true
   when: ansible_os_family == 'Debian'
   tags:
     - avinode_devenv_global_defaults
@@ -67,6 +69,8 @@
     name: go
     state: present
     selfupdate: false
+  ignore_errors: true
+  become: true
   when: ansible_os_family == 'Darwin'
   tags:
     - avinode_devenv_global_defaults
