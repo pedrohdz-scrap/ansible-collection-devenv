@@ -1,9 +1,0 @@
----
-- name: Statting bin file ({{ _test_file }})
-  ansible.builtin.stat:
-    path: '{{ _test_file }}'
-  register: _bin_test_file_stats
-- name: Asserting bin file is executable ({{ _test_file }})
-  ansible.builtin.assert:
-    that: _bin_test_file_stats.stat.exists and _bin_test_file_stats.stat.executable
-...

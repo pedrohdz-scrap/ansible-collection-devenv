@@ -1,6 +1,0 @@
----
-- ansible.builtin.include_tasks: _test_uninstalled_bash_completion_item.yaml
-  loop: '{{ test_files }}'
-  loop_control:
-    loop_var: _test_file
-...

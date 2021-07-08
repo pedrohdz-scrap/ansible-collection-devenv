@@ -1,9 +1,0 @@
----
-- name: Statting uninstalled Bash completion file ({{ _test_file }})
-  stat:
-    path: '{{ _test_file }}'
-  register: _bash_completion_test_file_stats
-- name: Asserting uninstalled Bash completion ({{ _test_file }})
-  assert:
-    that: not _bash_completion_test_file_stats.stat.exists
-...
