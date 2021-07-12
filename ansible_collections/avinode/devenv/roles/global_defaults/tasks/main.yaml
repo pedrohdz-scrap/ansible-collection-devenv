@@ -82,6 +82,7 @@
   register: __avinode_devenv_go_arch
   tags:
     - avinode_devenv_global_defaults
+  changed_when: false
 - name: Define avinode_devenv_go_arch.
   ansible.builtin.set_fact:
     avinode_devenv_go_arch: '{{ __avinode_devenv_go_arch.stdout | trim }}'
@@ -95,6 +96,7 @@
   register: __avinode_devenv_go_platform
   tags:
     - avinode_devenv_global_defaults
+  changed_when: false
 - name: Define avinode_devenv_go_platform.
   ansible.builtin.set_fact:
     avinode_devenv_go_platform: '{{ __avinode_devenv_go_platform.stdout | trim }}'
