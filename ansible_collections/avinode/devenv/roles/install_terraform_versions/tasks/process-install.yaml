@@ -20,6 +20,7 @@
       ansible.builtin.tempfile:
         state: directory
         suffix: .terraform-{{ version }}
+      changed_when: false
       register: _tmp_dir
 
     - name: Download Terraform zip file ({{ version }})
@@ -52,6 +53,7 @@
       ansible.builtin.file:
         path: '{{ _tmp_dir.path }}'
         state: absent
+      changed_when: false
   when: >-
     not _terraform_stat.stat.exists
       or 'Terraform v' + version not in _terraform_version.stdout

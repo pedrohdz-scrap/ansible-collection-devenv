@@ -1,0 +1,14 @@
+# WARNING - This file is managed by Ansible.  Local changes will be lost.
+# Only a single version of helm can be used to setup BASH shell completions.
+# This is a little hacky, but it works for the most part.
+source <({{ executable_file }} completion bash)
+
+if [[ $(type -t compopt) = "builtin" ]]; then
+{% for target in target_executables | sort %}
+  complete -o default -F __start_helm {{ target }}
+{% endfor %}
+else
+{% for target in target_executables | sort %}
+  complete -o default -o nospace -F __start_helm {{ target }}
+{% endfor %}
+fi
