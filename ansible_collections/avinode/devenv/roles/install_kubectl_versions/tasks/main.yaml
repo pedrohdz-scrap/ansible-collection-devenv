@@ -92,7 +92,7 @@
 
 - name: Ensure bash completions for kubectl
   ansible.builtin.template:
-    dest: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/kubectl'
+    dest: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/kubectl.sh'
     group: '{{ avinode_devenv_default_group }}'
     mode: '0644'
     owner: '{{ avinode_devenv_default_owner }}'

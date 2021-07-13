@@ -48,11 +48,11 @@
 
     - name: Test that Bash completion can be sourced.
       ansible.builtin.shell:
-        cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl"'
+        cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl.sh"'
 
     - name: Test that Bash completion lines still exist.
       ansible.builtin.lineinfile:
-        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl'
+        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl.sh'
         line: 'complete -F __start_kubectl {{ item }}'
         state: present
       check_mode: true
@@ -104,7 +104,7 @@
 
     - name: Test that Bash completion lines have been removed
       ansible.builtin.lineinfile:
-        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl'
+        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl.sh'
         line: 'complete -F __start_kubectl {{ item }}'
         state: absent
       check_mode: true
@@ -116,7 +116,7 @@
 
     - name: Test that older Bash completion lines still exist
       ansible.builtin.lineinfile:
-        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl'
+        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl.sh'
         line: 'complete -F __start_kubectl {{ item }}'
         state: present
       check_mode: true

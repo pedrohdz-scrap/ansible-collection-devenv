@@ -56,7 +56,7 @@
 
     - name: Test that Bash completions can be sourced.
       ansible.builtin.shell:
-        cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}"'
+        cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}.sh"'
       loop:
         - terraform
         - terraform0.14
@@ -94,7 +94,7 @@
 
     - name: Test that Bash completion files have been removed
       ansible.builtin.stat:
-        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}'
+        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}.sh'
       register: _test_file_stats
       failed_when: _test_file_stats.stat.exists
       loop:
@@ -115,7 +115,7 @@
 
     - name: Test that older Bash completion files still exist
       ansible.builtin.stat:
-        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}'
+        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}.sh'
       register: _test_file_stats
       failed_when: not _test_file_stats.stat.exists
       loop:

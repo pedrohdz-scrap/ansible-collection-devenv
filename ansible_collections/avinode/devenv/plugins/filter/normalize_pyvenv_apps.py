@@ -24,6 +24,8 @@ def normalize(item):
         item['packages'] = [item['name']]
     if 'state' not in item:
         item['state'] = 'present'
+    if 'has_argcomplete' not in item:
+        item['has_argcomplete'] = False
     return item
 
 

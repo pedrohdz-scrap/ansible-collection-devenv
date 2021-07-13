@@ -8,10 +8,14 @@
   loop_control:
     loop_var: _pyvenv_bin_symlink_item
     label: '{{ avinode_devenv_prefix }}/bin/{{ _pyvenv_bin_symlink_item }}'
+  tags:
+    - avinode_devenv_pyvenv_apps
 
 - name: Ensure absent application Python venv directory ({{ _pyvenv_path }}).
   ansible.builtin.file:
     path: '{{ _pyvenv_path }}'
     state: absent
   become: '{{ avinode_devenv_become_for_all }}'
+  tags:
+    - avinode_devenv_pyvenv_apps
 ...

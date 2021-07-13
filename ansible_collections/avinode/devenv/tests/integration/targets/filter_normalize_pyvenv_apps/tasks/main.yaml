@@ -6,6 +6,7 @@
     _expected:
       - name: foo
         bin_files: [foo]
+        has_argcomplete: false
         packages: [foo]
         state: 'present'
 ...

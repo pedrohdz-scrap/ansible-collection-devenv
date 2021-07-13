@@ -54,11 +54,11 @@
 
     - name: Test that Bash completion can be sourced.
       ansible.builtin.shell:
-        cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/helm"'
+        cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/helm.sh"'
 
     - name: Test that Bash completion lines still exist.
       ansible.builtin.lineinfile:
-        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/helm'
+        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/helm.sh'
         line: '  complete -o default -F __start_helm {{ item }}'
         state: present
       check_mode: true
@@ -107,7 +107,7 @@
 
     - name: Test that Bash completion lines have been removed
       ansible.builtin.lineinfile:
-        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/helm'
+        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/helm.sh'
         line: '  complete -o default -F __start_helm {{ item }}'
         state: absent
       check_mode: true
@@ -119,7 +119,7 @@
 
     - name: Test that older Bash completion lines still exist
       ansible.builtin.lineinfile:
-        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/helm'
+        name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/helm.sh'
         line: '  complete -o default -F __start_helm {{ item }}'
         state: present
       check_mode: true
