@@ -28,7 +28,6 @@
 
 - name: Ensure installed Apt packages.
   ansible.builtin.apt:
-    cache_valid_time: '{{ avinode_devenv_packages_cache_valid_time }}'
     install_recommends: false
     name: '{{ _packages_present }}'
     state: present

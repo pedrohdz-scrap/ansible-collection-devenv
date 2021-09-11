@@ -54,7 +54,6 @@
 # -----------------------------------------------------------------------------
 - name: Ensure golang is installed on Debian OS family.
   ansible.builtin.apt:
-    cache_valid_time: 86400  # 24 hours
     name: golang
     state: present
     update_cache: true

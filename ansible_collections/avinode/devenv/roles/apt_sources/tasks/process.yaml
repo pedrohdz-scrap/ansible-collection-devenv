@@ -2,12 +2,6 @@
 # -----------------------------------------------------------------------------
 # Baseline setup
 # -----------------------------------------------------------------------------
-- name: Get Apt source state files.
-  find:
-    paths: /var/lib/apt/lists
-    patterns: '*.lz4'
-  register: _apt_sources_state_files
-
 - name: Ensure minimum Apt packages for configuring Apt sources.
   ansible.builtin.apt:
     install_recommends: false
@@ -17,9 +11,8 @@
       - curl
       - gnupg
       - software-properties-common
-    cache_valid_time: '{{ avinode_devenv_packages_cache_valid_time }}'
     state: present
-    update_cache: '{{ avinode_devenv_packages_update_cache or (_apt_sources_state_files.matched == 0) }}'
+    update_cache: '{{ avinode_devenv_packages_update_cache }}'
   become: '{{ avinode_devenv_become_for_all }}'
 
 

@@ -3,6 +3,5 @@ avinode_devenv_become_for_all: false
 avinode_devenv_force_upgrade_all: false
 avinode_devenv_prefix: /opt/devenv
 
-avinode_devenv_packages_cache_valid_time: 1800
 avinode_devenv_packages_update_cache: false
 ...
