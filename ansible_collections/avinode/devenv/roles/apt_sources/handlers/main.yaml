@@ -1,6 +1,8 @@
 ---
 - name: Update Apt cache when source changes.
   ansible.builtin.apt:
+    autoclean: true
+    force_apt_get: true
     update_cache: true
   listen: update_apt_cache
   when: avinode_apt_sources_update_cache_on_change
