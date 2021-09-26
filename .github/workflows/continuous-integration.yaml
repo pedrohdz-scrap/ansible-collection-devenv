@@ -7,40 +7,44 @@ on:
   schedule:
     - cron: '12 3 * * 1'
 
+env:
+  project_dir: ansible_collections/avinode/devenv
+
 jobs:
   common-checks:
     name: Common checks (sanity, unit, integration tests)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          path: ${{ env.project_dir }}
 
       - name: Install latest version of Ansible in a Python venv
-        run: ${GITHUB_WORKSPACE}/scripts/setup-local-ansible.sh
+        working-directory: ${{ env.project_dir }}
+        run: scripts/setup-local-ansible.sh
 
       - name: Sanity checks
-        working-directory: ansible_collections/avinode/devenv/
-        run: |
-          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test sanity --color --docker default
+        working-directory: ${{ env.project_dir }}
+        run: .venv/bin/ansible-test sanity --color --docker default
 
       - name: Unit tests
-        working-directory: ansible_collections/avinode/devenv/
-        run: |
-          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test units --color --docker default
+        working-directory: ${{ env.project_dir }}
+        run: .venv/bin/ansible-test units --color --docker default
 
       - name: Integration tests (Debian)
-        working-directory: ansible_collections/avinode/devenv/
+        working-directory: ${{ env.project_dir }}
         run: |
-          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test integration --color \
+          .venv/bin/ansible-test integration --color \
             --docker 'geerlingguy/docker-debian10-ansible:latest' \
             --python-interpreter /usr/bin/python3
 
       - name: Integration tests (Ubuntu 2004)
-        working-directory: ansible_collections/avinode/devenv/
+        working-directory: ${{ env.project_dir }}
         run: |
           # Replace with 'geerlingguy/docker-ubuntu2004-ansible:latest' when
           # 'pycairo' is fixed:
           #   - https://github.com/geerlingguy/docker-ubuntu2004-ansible/issues/15
-          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test integration --color \
+          .venv/bin/ansible-test integration --color \
             --docker 'ubuntu2004' \
             --python-interpreter /usr/bin/python3
 
@@ -56,29 +60,35 @@ jobs:
           #- macos-11.0  # FIXME - Still in private preview (https://github.com/actions/virtual-environments).
     steps:
       - uses: actions/checkout@v2
+        with:
+          path: ${{ env.project_dir }}
 
       - name: Install MacPorts
-        run: ${GITHUB_WORKSPACE}/scripts/setup-macports.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ${{ env.project_dir }}
+        run: scripts/setup-macports.sh
 
       - name: Add MacPorts to the build PATH
+        working-directory: ${{ env.project_dir }}
         run: |
           echo '/opt/local/sbin' >> $GITHUB_PATH
           echo '/opt/local/bin' >> $GITHUB_PATH
           echo '/opt/local/libexec/gnubin' >> $GITHUB_PATH
 
       - name: System information
+        working-directory: ${{ env.project_dir }}
         run: |
           echo PATH="$PATH"
 
       - name: Install latest version of Ansible in a Python venv
-        run: ${GITHUB_WORKSPACE}/scripts/setup-local-ansible.sh
+        working-directory: ${{ env.project_dir }}
+        run: scripts/setup-local-ansible.sh
 
       - name: Run Ansible integration tests
-        working-directory: ansible_collections/avinode/devenv/
+        working-directory: ${{ env.project_dir }}
         run: |
-          ${GITHUB_WORKSPACE}/.venv/bin/ansible-test integration \
+          .venv/bin/ansible-test integration \
               --allow-destructive \
               --allow-root \
               --color \
