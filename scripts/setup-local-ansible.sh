@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 set -o errexit
 set -o pipefail
@@ -16,7 +16,7 @@ log_section() {
     set +o xtrace
     echo
     echo "+------------------------------------------------------------------------------"
-    echo "+ $@"
+    echo "+ $*"
     echo "+------------------------------------------------------------------------------"
   )
 }
@@ -49,7 +49,7 @@ log_section "Setup Python virtual environment"
 /usr/bin/python3 -m venv "${PROJECT_DIR}/.venv"
 # shellcheck disable=SC1091
 source "${PROJECT_DIR}/.venv/bin/activate"
-pip3 install --upgrade --upgrade-strategy eager wheel pip
+pip3 install --upgrade --upgrade-strategy eager pip setuptools wheel
 pip3 install ansible ansible-lint flake8 junit-xml mypi pylint pyright yamllint
 
 
@@ -69,7 +69,7 @@ yamllint --version
 #------------------------------------------------------------------------------
 log_section "Install Ansible collections"
 # shellcheck disable=SC2016
-ruby -r yaml -r json -e 'puts YAML.load($stdin.read).to_json' < ${PROJECT_DIR}/galaxy.yml \
+ruby -r yaml -r json -e 'puts YAML.load($stdin.read).to_json' < "${PROJECT_DIR}/galaxy.yml" \
     | jq -r '.dependencies | keys | .[]' \
     | xargs -I '{}' ansible-galaxy collection install --force --upgrade \
         --collections-path "$PROJECT_COLLECTION_DIR" '{}'
