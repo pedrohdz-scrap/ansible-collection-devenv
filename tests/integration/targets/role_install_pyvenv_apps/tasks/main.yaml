@@ -1,0 +1,98 @@
+---
+- name: Testing 'avinode.devenv.pyvenv_apps'
+  block:
+    # -------------------------------------------------------------------------
+    # Arrange
+    # -------------------------------------------------------------------------
+    - name: Create temporary test directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: .install-pyenv-app-integration-tests
+      register: _tmp_test_dir
+    - set_fact:
+        avinode_devenv_prefix: '{{ _tmp_test_dir.path }}'
+    - include_role:
+        name: avinode.devenv.baseline
+
+    # -------------------------------------------------------------------------
+    # Test install
+    # -------------------------------------------------------------------------
+    - name: Executing `pyvenv_apps` to test installs
+      import_role:
+        name: avinode.devenv.pyvenv_apps
+      vars:
+        avinode_devenv_pyvenv_apps:
+          - diceware
+          - flake8
+          - yamllint
+          - name: bump2version
+            bin_files: [bump2version, bumpversion]
+
+    - name: Test installed executables
+      ansible.builtin.command:
+        argv: '{{ [_tmp_test_dir.path + "/bin/" + item.key] + item.value }}'
+      loop: '{{ _test_commands | dict2items }}'
+      vars:
+        _test_commands:
+          bump2version: [-h]
+          bumpversion: [-h]
+          diceware: [--version]
+          flake8: [--version]
+          yamllint: [--version]
+
+    # -------------------------------------------------------------------------
+    # Test uninstall
+    # -------------------------------------------------------------------------
+    - name: Executing `pyvenv_apps` to test uninstalls
+      import_role:
+        name: avinode.devenv.pyvenv_apps
+      vars:
+        avinode_devenv_pyvenv_apps:
+          - name: flake8
+            state: absent
+          - name: bump2version
+            bin_files: [bump2version, bumpversion]
+            state: absent
+
+    # Check that files have been removed.
+    - name: Test that the bin files have been uninstalled
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop:
+        - bump2version
+        - bumpversion
+        - flake8
+
+    # Check that files have been removed.
+    - name: Test that the venv directories have been uninstalled
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/opt/python/{{ item }}'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop:
+        - bump2version  # Note that `bumpversion` is in the same directory
+        - flake8
+
+    # Check that originals are still in place.
+    - name: Test that the bin files for the other versions still exist.
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      register: _test_file_stats
+      failed_when: |
+        not (_test_file_stats.stat.exists and _test_file_stats.stat.executable)
+      loop:
+        - diceware
+        - yamllint
+
+  always:
+    - name: Delete temporary test directory
+      ansible.builtin.file:
+        path: '{{ _tmp_test_dir.path }}'
+        state: absent
+  vars:
+    avinode_devenv_become_for_all: false
+    avinode_devenv_default_group: '{{ ansible_user_gid }}'
+    avinode_devenv_default_owner: '{{ ansible_user_id }}'
+...

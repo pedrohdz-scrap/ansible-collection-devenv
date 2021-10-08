@@ -1,8 +1,29 @@
 ---
+- name: Ensure python3-venv is installed on Debian OS family.
+  ansible.builtin.apt:
+    name: python3-venv
+    state: present
+  become: '{{ avinode_devenv_become_for_all }}'
+  when: ansible_os_family == 'Debian'
+  tags:
+    - avinode_devenv_pyvenv_apps
+
 - name: Set pyenv application installation facts.
   ansible.builtin.set_fact:
     _pyvenv_apps_normalized: '{{ avinode_devenv_pyvenv_apps | avinode.devenv.normalize_pyvenv_apps }}'
     _pyvenv_apps_home_dir: '{{ avinode_devenv_prefix }}/opt/python'
+  tags:
+    - avinode_devenv_pyvenv_apps
+
+- include_tasks: process-uninstall.yaml
+  vars:
+    _pyvenv_bin_files: '{{ _pyvenv_uninstall_item["bin_files"] }}'
+    _pyvenv_packages: '{{ _pyvenv_uninstall_item["packages"] }}'
+    _pyvenv_path: '{{ avinode_devenv_prefix }}/opt/python/{{ _pyvenv_uninstall_item["name"] }}'
+  loop: '{{ _pyvenv_apps_normalized | selectattr("state", "eq", "absent") }}'
+  loop_control:
+    loop_var: _pyvenv_uninstall_item
+    label: '{{ _pyvenv_uninstall_item.name }}'
   tags:
     - avinode_devenv_pyvenv_apps
 
@@ -18,18 +39,6 @@
   loop_control:
     loop_var: _pyvenv_install_item
     label: '{{ _pyvenv_install_item.name }}'
-  tags:
-    - avinode_devenv_pyvenv_apps
-
-- include_tasks: process-uninstall.yaml
-  vars:
-    _pyvenv_bin_files: '{{ _pyvenv_uninstall_item["bin_files"] }}'
-    _pyvenv_packages: '{{ _pyvenv_uninstall_item["packages"] }}'
-    _pyvenv_path: '{{ avinode_devenv_prefix }}/opt/python/{{ _pyvenv_uninstall_item["name"] }}'
-  loop: '{{ _pyvenv_apps_normalized | selectattr("state", "eq", "absent") }}'
-  loop_control:
-    loop_var: _pyvenv_uninstall_item
-    label: '{{ _pyvenv_uninstall_item.name }}'
   tags:
     - avinode_devenv_pyvenv_apps
 ...

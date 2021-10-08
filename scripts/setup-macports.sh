@@ -70,4 +70,6 @@ log 'Running MacPorts selfupdate/upgrade...'
 /usr/bin/sudo /opt/local/bin/port upgrade outdated
 
 log 'Install minimum required MacPorts...'
-/usr/bin/sudo /opt/local/bin/port install coreutils
+/usr/bin/sudo /opt/local/bin/port install coreutils python39 python3_select python_select
+/usr/bin/sudo /opt/local/bin/port select python3 python39
+/usr/bin/sudo /opt/local/bin/port select python python39

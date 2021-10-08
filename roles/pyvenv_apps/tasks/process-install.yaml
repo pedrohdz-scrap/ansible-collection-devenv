@@ -13,7 +13,8 @@
 - name: Ensure application installed in Python venv ({{ _pyvenv_path }}).
   ansible.builtin.pip:
     chdir: '{{ _pyvenv_path }}'
-    name: '{{ _pyvenv_packages }}'
+    # Forcing the installation of `wheel` should speed things up.
+    name: '{{ ([ "pip", "setuptools", "wheel"] + _pyvenv_packages) | unique}}'
     state: '{{ _pyvenv_state }}'
     virtualenv: '{{ _pyvenv_path }}'
     virtualenv_command: '{{ _pyvenv_venv_command }}'

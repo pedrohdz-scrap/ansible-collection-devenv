@@ -23,17 +23,17 @@ Run tests:
 ```bash
 cd ansible-collection-devenv/ansible_collections/avinode/devenv
 
-ansible-test sanity --docker default \
+ansible-test sanity --color --docker default \
     --exclude scripts/setup-local-ansible.sh \
     --exclude scripts/setup-macports.sh \
     --exclude .gitignore
 
-ansible-test units --docker default
+ansible-test units --color --docker default
 
-ansible-test integration --docker ubuntu2004 \
+ansible-test integration --color --docker ubuntu2004 \
     --python-interpreter /usr/bin/python3
 
-ansible-test integration \
+ansible-test integration --color \
     --docker geerlingguy/docker-debian10-ansible:latest \
     --python-interpreter /usr/bin/python3
 ```
