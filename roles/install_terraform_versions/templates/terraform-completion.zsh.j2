@@ -1,0 +1,8 @@
+#compdef {{ executable_file | basename }}
+
+# WARNING - This file is managed by Ansible.  Local changes will be lost.
+
+autoload -U +X bashcompinit && bashcompinit
+autoload -Uz compinit && compinit
+
+complete -C '{{ executable_file }}' {{ executable_file | basename }}

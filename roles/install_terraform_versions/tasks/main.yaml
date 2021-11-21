@@ -26,16 +26,29 @@
   tags:
     - avinode_devenv_install_terraform
 
+- name: Setting Terraform install absent names fact
+  set_fact:
+    _install_terraform_absent_names: >-
+      {{ (install_terraform_versions.absent | map('regex_replace', '^(.*)$', 'terraform\1'))
+          + install_terraform_versions.absent_symlinks | list }}
+
 - name: Ensure absent bash completions for Terraform
   ansible.builtin.file:
     path: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/{{ _item }}.sh'
     state: absent
-  vars:
-    executable_file: '{{ avinode_devenv_prefix }}/bin/{{ _item }}'
   become: '{{ avinode_devenv_become_for_all }}'
-  loop: >-
-    {{ (install_terraform_versions.absent | map('regex_replace', '^(.*)$', 'terraform\1'))
-        + install_terraform_versions.absent_symlinks | list }}
+  loop: '{{ _install_terraform_absent_names }}'
+  loop_control:
+    loop_var: _item
+  tags:
+    - avinode_devenv_install_terraform
+
+- name: Ensure absent Zsh completions for Terraform
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/share/zsh/site-functions/_{{ _item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _install_terraform_absent_names }}'
   loop_control:
     loop_var: _item
   tags:
@@ -76,6 +89,12 @@
 #------------------------------------------------------------------------------
 # Setup shell completions
 #------------------------------------------------------------------------------
+- name: Setting Terraform install present symlinks fact
+  set_fact:
+    _install_terraform_present_symlink_names: >-
+      {{ (install_terraform_versions.installed | map('regex_replace', '^(.*)$', 'terraform\1'))
+          + install_terraform_versions.symlinks | list }}
+
 - name: Ensure bash completions for Terraform
   ansible.builtin.template:
     dest: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/{{ _item }}.sh'
@@ -86,9 +105,23 @@
   vars:
     executable_file: '{{ avinode_devenv_prefix }}/bin/{{ _item }}'
   become: '{{ avinode_devenv_become_for_all }}'
-  loop: >-
-    {{ (install_terraform_versions.installed | map('regex_replace', '^(.*)$', 'terraform\1'))
-        + install_terraform_versions.symlinks | list }}
+  loop: '{{ _install_terraform_present_symlink_names }}'
+  loop_control:
+    loop_var: _item
+  tags:
+    - avinode_devenv_install_terraform
+
+- name: Ensure Zsh completions for Terraform
+  ansible.builtin.template:
+    dest: '{{ avinode_devenv_prefix }}/share/zsh/site-functions/_{{ _item }}'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0644'
+    owner: '{{ avinode_devenv_default_owner }}'
+    src: terraform-completion.zsh.j2
+  vars:
+    executable_file: '{{ avinode_devenv_prefix }}/bin/{{ _item }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _install_terraform_present_symlink_names }}'
   loop_control:
     loop_var: _item
   tags:

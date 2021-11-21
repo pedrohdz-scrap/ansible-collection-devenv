@@ -1,8 +1,8 @@
 ---
-- name: Ensure unzip is installed.
+- name: Ensure required tools are installed.
   ansible.builtin.apt:
     cache_valid_time: 86400  # 24 hours
-    name: unzip
+    name: [unzip, zsh]
     state: present
     update_cache: true
   when: ansible_os_family == 'Debian'
@@ -64,6 +64,16 @@
         - terraform1
         - terraform1.0.1
 
+    - name: Test that Zsh completions can be sourced.
+      ansible.builtin.shell:
+        cmd: '/bin/zsh -c "source {{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ item }}"'
+      loop:
+        - terraform
+        - terraform0.14
+        - terraform0.14.7
+        - terraform1
+        - terraform1.0.1
+
     # -------------------------------------------------------------------------
     # Test uninstall
     # -------------------------------------------------------------------------
@@ -92,15 +102,6 @@
         - terraform0.14
         - terraform0.14.7
 
-    - name: Test that Bash completion files have been removed
-      ansible.builtin.stat:
-        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}.sh'
-      register: _test_file_stats
-      failed_when: _test_file_stats.stat.exists
-      loop:
-        - terraform0.14
-        - terraform0.14.7
-
     # Check that originals are still in place.
     - name: Test that the bin files for the other versions still exist.
       ansible.builtin.stat:
@@ -113,15 +114,45 @@
         - terraform1
         - terraform1.0.1
 
+    # ---- bash ----
+    - name: Test that Bash completion files have been removed
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}.sh'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop:
+        - terraform0.14
+        - terraform0.14.7
+
     - name: Test that older Bash completion files still exist
       ansible.builtin.stat:
         path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ item }}.sh'
       register: _test_file_stats
       failed_when: not _test_file_stats.stat.exists
       loop:
-      - terraform
-      - terraform1
-      - terraform1.0.1
+        - terraform
+        - terraform1
+        - terraform1.0.1
+
+    # ---- Zsh ----
+    - name: Test that Zsh completion files have been removed
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ item }}'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop:
+        - terraform0.14
+        - terraform0.14.7
+
+    - name: Test that older Zsh completion files still exist
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ item }}'
+      register: _test_file_stats
+      failed_when: not _test_file_stats.stat.exists
+      loop:
+        - terraform
+        - terraform1
+        - terraform1.0.1
 
   always:
     - name: Delete temporary test directory

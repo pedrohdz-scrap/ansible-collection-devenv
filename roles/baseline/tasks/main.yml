@@ -16,6 +16,8 @@
     - opt
     - opt/python
     - share
+    - share/zsh
+    - share/zsh/site-functions
   loop_control:
     label: '{{ avinode_devenv_prefix }}/{{ item }}'
 ...
