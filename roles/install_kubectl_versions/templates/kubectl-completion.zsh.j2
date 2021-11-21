@@ -1,0 +1,7 @@
+#compdef {{ _kubectl_completion_target }}
+
+# WARNING - This file is managed by Ansible.  Local changes will be lost.
+
+autoload -Uz _kubectl && _kubectl
+
+complete -F __start_kubectl {{ _kubectl_completion_target }}

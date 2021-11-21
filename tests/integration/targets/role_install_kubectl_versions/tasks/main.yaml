@@ -1,4 +1,12 @@
 ---
+- name: Ensure required tools are installed.
+  ansible.builtin.apt:
+    cache_valid_time: 86400  # 24 hours
+    name: [zsh]
+    state: present
+    update_cache: true
+  when: ansible_os_family == 'Debian'
+
 - name: Testing 'avinode.devenv.install_kubectl_versions'
   block:
     # -------------------------------------------------------------------------
@@ -46,6 +54,7 @@
           kubectl1.21: '1.21.2'
           kubectl1.21.2: '1.21.2'
 
+    # ---- Bash ----
     - name: Test that Bash completion can be sourced.
       ansible.builtin.shell:
         cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl.sh"'
@@ -63,6 +72,22 @@
         - kubectl1.19.12
         - kubectl1.21
         - kubectl1.21.2
+
+    # ---- Zsh ----
+    - name: Test that Zsh completions can be sourced.
+      ansible.builtin.shell:
+        cmd: |
+          autoload -U +X bashcompinit && bashcompinit
+          autoload -Uz compinit && compinit
+          source {{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ item }}
+        executable: /bin/zsh
+      loop:
+        - kubectl
+        - kubectl1.19
+        - kubectl1.19.12
+        - kubectl1.21
+        - kubectl1.21.2
+
 
     # -------------------------------------------------------------------------
     # Test uninstall
@@ -102,7 +127,8 @@
         - kubectl1.21
         - kubectl1.21.2
 
-    - name: Test that Bash completion lines have been removed
+    # ---- bash ----
+    - name: Test that Bash kubectl completion lines have been removed
       ansible.builtin.lineinfile:
         name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl.sh'
         line: 'complete -F __start_kubectl {{ item }}'
@@ -114,7 +140,7 @@
         - kubectl1.19
         - kubectl1.19.12
 
-    - name: Test that older Bash completion lines still exist
+    - name: Test that older Bash kubectl completion lines still exist
       ansible.builtin.lineinfile:
         name: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/kubectl.sh'
         line: 'complete -F __start_kubectl {{ item }}'
@@ -123,6 +149,26 @@
       register: _completion_line_check
       failed_when: (_completion_line_check is changed) or (_completion_line_check is failed)
       loop:
+        - kubectl1.21
+        - kubectl1.21.2
+
+    # ---- Zsh ----
+    - name: Test that Zsh kubectl completion files have been removed
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ item }}'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop:
+        - kubectl1.19
+        - kubectl1.19.12
+
+    - name: Test that older Zsh kubectl completion files still exist
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ item }}'
+      register: _test_file_stats
+      failed_when: not _test_file_stats.stat.exists
+      loop:
+        - kubectl
         - kubectl1.21
         - kubectl1.21.2
 

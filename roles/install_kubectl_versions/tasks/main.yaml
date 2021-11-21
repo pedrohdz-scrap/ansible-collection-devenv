@@ -26,12 +26,10 @@
   tags:
     - avinode_devenv_install_kubectl
 
-- name: Ensure absent bash completions for kubectl
+- name: Ensure absent Zsh completions for kubectl
   ansible.builtin.file:
-    path: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/{{ _item }}'
+    path: '{{ avinode_devenv_prefix }}/share/zsh/site-functions/_{{ _item }}'
     state: absent
-  vars:
-    executable_file: '{{ avinode_devenv_prefix }}/bin/{{ _item }}'
   become: '{{ avinode_devenv_become_for_all }}'
   loop: >-
     {{ (install_kubectl_versions.absent | map('regex_replace', '^(.*)$', 'kubectl\1'))
@@ -76,6 +74,13 @@
 #------------------------------------------------------------------------------
 # Setup shell completions
 #------------------------------------------------------------------------------
+- name: Setting kubectl install present symlinks fact
+  set_fact:
+    _install_kubectl_present_symlink_names: >-
+      {{ (install_kubectl_versions.installed | map('regex_replace', '^(.*)$', 'kubectl\1'))
+          + install_kubectl_versions.symlinks | list | reject('match', '^kubectl$') }}
+
+#---- bash ----
 - name: Stat kubectl symlink/file
   ansible.builtin.stat:
     path: '{{ avinode_devenv_prefix }}/bin/kubectl'
@@ -85,7 +90,7 @@
 
 - name: Verify kubectl symlink exists
   ansible.builtin.fail:
-    msg: A '{{ avinode_devenv_prefix }}/bin/kubectl' symlink must exists in order to configure BASH completions.
+    msg: A '{{ avinode_devenv_prefix }}/bin/kubectl' symlink must exists in order to configure BASH & Zsh completions.
   when: not _kubectl_symlink_stat.stat.exists
   tags:
     - avinode_devenv_install_kubectl
@@ -100,9 +105,40 @@
   become: '{{ avinode_devenv_become_for_all }}'
   vars:
     executable_file: '{{ avinode_devenv_prefix }}/bin/kubectl'
-    target_executables: >-
-      {{ (install_kubectl_versions.installed | map('regex_replace', '^(.*)$', 'kubectl\1'))
-          + install_kubectl_versions.symlinks | list | reject('match', '^kubectl$') }}
+    target_executables: '{{ _install_kubectl_present_symlink_names }}'
+  tags:
+    - avinode_devenv_install_kubectl
+
+#---- Zsh ----
+- name: Fetch kubectl Zsh completion script contents
+  ansible.builtin.command:
+    cmd: '"{{ avinode_devenv_prefix }}/bin/kubectl" completion zsh'
+  register: _kubectl_completion_contents
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Ensure main kubectl Zsh completion autoload function
+  ansible.builtin.copy:
+    content: '{{ _kubectl_completion_contents.stdout }}'
+    dest: '{{ avinode_devenv_prefix }}/share/zsh/site-functions/_kubectl'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0644'
+    owner: '{{ avinode_devenv_default_owner }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  tags:
+    - avinode_devenv_install_kubectl
+
+- name: Ensure other kubectl Zsh completions
+  ansible.builtin.template:
+    dest: '{{ avinode_devenv_prefix }}/share/zsh/site-functions/_{{ _kubectl_completion_target }}'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0644'
+    owner: '{{ avinode_devenv_default_owner }}'
+    src: kubectl-completion.zsh.j2
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _install_kubectl_present_symlink_names }}'
+  loop_control:
+    loop_var: _kubectl_completion_target
   tags:
     - avinode_devenv_install_kubectl
 ...
