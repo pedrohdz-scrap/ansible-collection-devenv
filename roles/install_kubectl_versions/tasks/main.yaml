@@ -114,6 +114,7 @@
   ansible.builtin.command:
     cmd: '"{{ avinode_devenv_prefix }}/bin/kubectl" completion zsh'
   register: _kubectl_completion_contents
+  changed_when: false
   tags:
     - avinode_devenv_install_kubectl
 
