@@ -50,7 +50,7 @@ log_section "Setup Python virtual environment"
 # shellcheck disable=SC1091
 source "${PROJECT_DIR}/.venv/bin/activate"
 pip3 install --upgrade --upgrade-strategy eager pip setuptools wheel
-pip3 install ansible ansible-lint flake8 junit-xml mypi pylint pyright yamllint
+pip3 install --requirement "${PROJECT_DIR}/requirements.txt"
 
 
 #------------------------------------------------------------------------------

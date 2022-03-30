@@ -1,0 +1,8 @@
+ansible-lint
+ansible==4.10.0
+flake8
+junit-xml
+mypi
+pylint
+pyright
+yamllint

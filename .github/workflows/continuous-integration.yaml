@@ -40,8 +40,7 @@ jobs:
         run: |
           .venv/bin/ansible-test integration --color \
             --docker 'geerlingguy/docker-debian10-ansible:latest' \
-            --python-interpreter /usr/bin/python3 \
-            --python '3.7'
+            --python-interpreter /usr/bin/python3
 
       - name: Integration tests (Ubuntu 2004)
         working-directory: ${{ env.project_dir }}
