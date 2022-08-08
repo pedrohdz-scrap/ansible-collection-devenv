@@ -22,6 +22,7 @@ Run tests:
 
 ```bash
 cd ansible-collection-devenv/ansible_collections/avinode/devenv
+source ./.venv/bin/activate
 
 ansible-test sanity --color --docker default \
     --exclude scripts/setup-local-ansible.sh \
