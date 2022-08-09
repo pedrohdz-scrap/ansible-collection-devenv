@@ -11,6 +11,26 @@ env:
   project_dir: ansible_collections/avinode/devenv
 
 jobs:
+  super-lint:
+    name: Super Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: ${{ env.project_dir }}
+
+      - name: Install latest version of Ansible in a Python venv
+        working-directory: ${{ env.project_dir }}
+        run: scripts/setup-local-ansible.sh
+
+      - name: Super Lint the Code Base
+        uses: docker://ghcr.io/github/super-linter:slim-v4
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Thank you: https://github.com/github/super-linter/issues/157#issuecomment-648850330
+          PYTHONPATH: /github/workspace/${{ env.project_dir }}/.venv/lib/python3.8/site-packages
+
   common-checks:
     name: Common checks (sanity, unit, integration tests)
     runs-on: ubuntu-latest
@@ -88,6 +108,7 @@ jobs:
     name: Macports integration tests
     needs:
       - common-checks
+      - super-lint
     runs-on: ${{ matrix.MACOS_WORKER_VERSION }}
     strategy:
       matrix:

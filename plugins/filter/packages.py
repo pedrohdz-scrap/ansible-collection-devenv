@@ -1,4 +1,5 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 from ansible.module_utils.six.moves import filterfalse
@@ -14,6 +15,7 @@ def process_items(package_mgr, state_test, items):
 def item_processor(package_mgr):
     def _item_processor(item):
         return process_item(package_mgr, item)
+
     return _item_processor
 
 
@@ -25,14 +27,14 @@ def process_item(package_mgr, item):
         sub_item = item[package_mgr]
         if isinstance(sub_item, str):
             return [sub_item]
-        return sub_item['packages']
+        return sub_item["packages"]
     except KeyError:
         pass
 
     try:
-        return item['packages']
+        return item["packages"]
     except KeyError:
-        return [item['name']]
+        return [item["name"]]
 
 
 def process_macport_variants(package_mgr, items):
@@ -43,20 +45,20 @@ def process_macport_variants(package_mgr, items):
 
 
 def process_macport_variant_item(item):
-    return (item['macports']['variant_name'], item['macports']['variant'])
+    return (item["macports"]["variant_name"], item["macports"]["variant"])
 
 
 def process_alternatives(package_mgr, items):
     filtered_items = filterfalse(is_ignore(package_mgr), items)
     filtered_items = filter(is_present, filtered_items)
     filtered_items = filter(has_alternatives(package_mgr), filtered_items)
-    return sum(map(
-        process_alternatives_item(package_mgr), filtered_items), start=[])
+    return sum(map(process_alternatives_item(package_mgr), filtered_items), start=[])
 
 
 def process_alternatives_item(package_mgr):
     def _func(item):
-        return list(item[package_mgr]['alternatives'].items())
+        return list(item[package_mgr]["alternatives"].items())
+
     return _func
 
 
@@ -65,14 +67,14 @@ def process_alternatives_item(package_mgr):
 # -----------------------------------------------------------------------------
 def is_absent(item):
     try:
-        return item['state'] == 'absent'
+        return item["state"] == "absent"
     except (TypeError, KeyError):
         return False
 
 
 def is_present(item):
     try:
-        return item['state'] == 'present'
+        return item["state"] == "present"
     except (TypeError, KeyError):
         return True
 
@@ -80,30 +82,32 @@ def is_present(item):
 def is_ignore(package_mgr):
     def _ignore_filter(item):
         try:
-            return item[package_mgr]['ignore']
+            return item[package_mgr]["ignore"]
         except (TypeError, KeyError):
             return False
+
     return _ignore_filter
 
 
 def has_macport_variants(package_mgr):
     def _filter(item):
-        if package_mgr != 'macports':
+        if package_mgr != "macports":
             return False
         try:
-            return ('variant' in item['macports']
-                    or 'variant_name' in item['macports'])
+            return "variant" in item["macports"] or "variant_name" in item["macports"]
         except (KeyError, TypeError):
             return False
+
     return _filter
 
 
 def has_alternatives(package_mgr):
     def _filter(item):
         try:
-            return 'alternatives' in item[package_mgr]
+            return "alternatives" in item[package_mgr]
         except (TypeError, KeyError):
             return False
+
     return _filter
 
 
@@ -129,8 +133,8 @@ def alternatives(items, package_mgr):
 class FilterModule(object):
     def filters(self):
         return {
-            'absent_packages': absent_packages,
-            'alternatives': alternatives,
-            'present_macport_variants': present_macport_variants,
-            'present_packages': present_packages,
+            "absent_packages": absent_packages,
+            "alternatives": alternatives,
+            "present_macport_variants": present_macport_variants,
+            "present_packages": present_packages,
         }

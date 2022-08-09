@@ -1,7 +1,6 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, division, print_function
 
-from copy import deepcopy
+__metaclass__ = type
 
 
 def normalize_pyvenv_apps(items):
@@ -11,26 +10,26 @@ def normalize_pyvenv_apps(items):
 
 def convert_string(item):
     if isinstance(item, str):
-        return {'name': item}
+        return {"name": item}
     elif isinstance(item, dict):
         return item
-    raise TypeError('Unknown type for: {0}'.format(item))
+    raise TypeError("Unknown type for: {0}".format(item))
 
 
 def normalize(item):
-    if 'bin_files' not in item:
-        item['bin_files'] = [item['name']]
-    if 'packages' not in item:
-        item['packages'] = [item['name']]
-    if 'state' not in item:
-        item['state'] = 'present'
-    if 'has_argcomplete' not in item:
-        item['has_argcomplete'] = False
+    if "bin_files" not in item:
+        item["bin_files"] = [item["name"]]
+    if "packages" not in item:
+        item["packages"] = [item["name"]]
+    if "state" not in item:
+        item["state"] = "present"
+    if "has_argcomplete" not in item:
+        item["has_argcomplete"] = False
     return item
 
 
 class FilterModule(object):
     def filters(self):
         return {
-            'normalize_pyvenv_apps': normalize_pyvenv_apps,
+            "normalize_pyvenv_apps": normalize_pyvenv_apps,
         }

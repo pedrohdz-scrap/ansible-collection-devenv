@@ -22,6 +22,7 @@ integration_phony_targets := $(addprefix integration-, debian10 debian11 ubuntu2
 		$(integration_phony_targets) \
 		integration \
 		sanity \
+		super-linter \
 		units
 
 
@@ -30,7 +31,7 @@ integration_phony_targets := $(addprefix integration-, debian10 debian11 ubuntu2
 #------------------------------------------------------------------------------
 all: pre-commit
 
-pre-commit: sanity units integration
+pre-commit: super-linter sanity units integration
 
 # TODO - Add the following once it works: integration-debian10 integration-ubuntu2204
 integration: integration-debian11 integration-ubuntu2004
