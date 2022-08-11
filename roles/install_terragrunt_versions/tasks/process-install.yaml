@@ -1,0 +1,108 @@
+---
+#------------------------------------------------------------------------------
+# Attempt to install pre-built binaries
+#------------------------------------------------------------------------------
+- name: Check if terragrunt{{ _version }} is installed for download
+  ansible.builtin.stat:
+    path: '{{ _bin_file }}'
+  register: _bin_file_dl_stat
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Attempt to download terragrunt{{ _version }}
+  block:
+    - name: Create temporary file
+      ansible.builtin.tempfile:
+        state: file
+        suffix: .terragrunt-download-{{ _version }}
+      register: _tmp_download_file
+
+    - name: Download terragrunt{{ _version }}
+      ansible.builtin.get_url:
+        checksum: sha256:https://github.com/gruntwork-io/terragrunt/releases/download/v{{ _version }}/SHA256SUMS
+        dest: '{{ _tmp_download_file.path }}'
+        mode: '0755'
+        url: https://github.com/gruntwork-io/terragrunt/releases/download/v{{ _version }}/terragrunt_{{ avinode_devenv_go_platform }}_{{ _arch }}
+      vars:
+        _arch: '{{ avinode_devenv_go_arch | first }}'
+
+    - name: Confirm downloaded terragrunt{{ _version }} executes
+      ansible.builtin.command:
+        cmd: '{{ _tmp_download_file.path }} --version'
+      changed_when: false
+      failed_when: false
+      register: _tmp_download_file_execute
+
+    - name: Ensure downloaded terragrunt{{ _version }} installed
+      ansible.builtin.copy:
+        dest: '{{ _bin_file }}'
+        group: '{{ avinode_devenv_default_group }}'
+        mode: '0755'
+        owner: '{{ avinode_devenv_default_owner }}'
+        remote_src: true
+        src: '{{ _tmp_download_file.path }}'
+      become: '{{ avinode_devenv_become_for_all }}'
+      when: _tmp_download_file_execute.rc == 0
+
+  when: not _bin_file_dl_stat.stat.exists
+  always:
+    - name: Delete temporary test download file for terragrunt{{ _version }}
+      ansible.builtin.file:
+        path: '{{ _tmp_download_file.path }}'
+        state: absent
+  tags:
+    - avinode_devenv_install_terragrunt
+
+
+#------------------------------------------------------------------------------
+# Build is pre-built binaries do not work
+#------------------------------------------------------------------------------
+- name: Check if terragrunt{{ _version }} is installed for build
+  ansible.builtin.stat:
+    path: '{{ _bin_file }}'
+  register: _bin_file_build_stat
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Process building and installing terragrunt{{ _version }}
+  block:
+    - name: Create temporary build directory for terragrunt{{ _version }}
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: .install-terragrunt-build-{{ _version }}
+      register: _tmp_build_dir
+
+    - name: Git checkout {{ _version }}
+      ansible.builtin.git:
+        repo: https://github.com/gruntwork-io/terragrunt.git
+        dest: '{{ _tmp_build_dir.path }}'
+        version: 'v{{ _version }}'
+
+    - name: Build terragrunt{{ _version }}
+      ansible.builtin.shell:
+        cmd: |
+          set -o errexit
+          set -o nounset
+          make build
+        creates: '{{ _tmp_build_dir.path }}/terragrunt'
+        chdir: '{{ _tmp_build_dir.path }}'
+
+    - name: Ensure built terragrunt{{ _version }} installed
+      ansible.builtin.copy:
+        dest: '{{ _bin_file }}'
+        group: '{{ avinode_devenv_default_group }}'
+        mode: '0755'
+        owner: '{{ avinode_devenv_default_owner }}'
+        remote_src: true
+        src: '{{ _tmp_build_dir.path }}/terragrunt'
+      become: '{{ avinode_devenv_become_for_all }}'
+
+  always:
+    - name: Delete temporary test directory for terragrunt{{ _version }}
+      ansible.builtin.file:
+        path: '{{ _tmp_build_dir.path }}'
+        state: absent
+  when: not _bin_file_build_stat.stat.exists
+  tags:
+    - avinode_devenv_install_terragrunt
+...

@@ -1,0 +1,16 @@
+---
+install_terragrunt_terraform_bin: /opt/devenv/bin/terraform
+
+install_terragrunt_versions:
+  absent: []
+    # - '0.34.1'
+  absent_symlinks: []
+    # - terragrunt0.34
+  installed: []
+    # - '0.35.6'
+    # - '0.38.7'
+  symlinks: {}
+    # terragrunt0.35: '0.35.6'
+    # terragrunt0.38: '0.38.7'
+    # terragrunt: '0.38.7'
+...

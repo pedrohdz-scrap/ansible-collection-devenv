@@ -1,0 +1,136 @@
+---
+#------------------------------------------------------------------------------
+# Remove Terragrunt
+#------------------------------------------------------------------------------
+- name: Ensure Terragrunt versions absent
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/terragrunt{{ _terragrunt_item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_terragrunt_versions.absent }}'
+  loop_control:
+    loop_var: _terragrunt_item
+  when: install_terragrunt_versions.absent is defined
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Ensure Terragrunt symlinks absent
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/{{ _terragrunt_item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_terragrunt_versions.absent_symlinks }}'
+  loop_control:
+    loop_var: _terragrunt_item
+  when: install_terragrunt_versions.absent_symlinks is defined
+  tags:
+    - avinode_devenv_install_terragrunt
+
+
+#------------------------------------------------------------------------------
+# Remove Terragrunt Shell Completions
+#------------------------------------------------------------------------------
+- name: Setting Terragrunt install absent names fact
+  ansible.builtin.set_fact:
+    _install_terragrunt_absent_names: >-
+      {{ (install_terragrunt_versions.absent | map('regex_replace', '^(.*)$', 'terragrunt\1'))
+          + install_terragrunt_versions.absent_symlinks | list }}
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Ensure absent bash completions for Terragrunt
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/{{ _item }}.sh'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _install_terragrunt_absent_names }}'
+  loop_control:
+    loop_var: _item
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Ensure absent Zsh completions for Terragrunt
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/share/zsh/site-functions/_{{ _item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _install_terragrunt_absent_names }}'
+  loop_control:
+    loop_var: _item
+  tags:
+    - avinode_devenv_install_terragrunt
+
+
+#------------------------------------------------------------------------------
+# Install
+#------------------------------------------------------------------------------
+- name: 'Building and installing terragrunt'
+  include_tasks: process-install.yaml
+  vars:
+    _bin_file: '{{ avinode_devenv_prefix }}/bin/terragrunt{{ _terragrunt_item }}'
+    _version: '{{ _terragrunt_item }}'
+  loop: '{{ install_terragrunt_versions.installed }}'
+  loop_control:
+    loop_var: _terragrunt_item
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Ensure terragrunt symlinks
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/{{ _terragrunt_item.key }}'
+    src: '{{ avinode_devenv_prefix }}/bin/terragrunt{{ _terragrunt_item.value }}'
+    state: link
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_terragrunt_versions.symlinks | dict2items }}'
+  loop_control:
+    loop_var: _terragrunt_item
+  when: install_terragrunt_versions.symlinks is defined
+  tags:
+    - avinode_devenv_install_terragrunt
+
+
+#------------------------------------------------------------------------------
+# Setup shell completions
+#------------------------------------------------------------------------------
+- name: Setting Terragrunt install present symlinks fact
+  set_fact:
+    _install_terragrunt_present_symlink_names: >-
+      {{ (install_terragrunt_versions.installed | map('regex_replace', '^(.*)$', 'terragrunt\1'))
+          + install_terragrunt_versions.symlinks | list }}
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Ensure bash completions for Terragrunt
+  ansible.builtin.template:
+    dest: '{{ avinode_devenv_prefix }}/etc/bash_completion.d/{{ _item }}.sh'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0644'
+    owner: '{{ avinode_devenv_default_owner }}'
+    src: terragrunt-completion.sh.j2
+  vars:
+    terraform_executable_file: '{{ install_terragrunt_terraform_bin }}'
+    terragrunt_name: '{{ _item }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _install_terragrunt_present_symlink_names }}'
+  loop_control:
+    loop_var: _item
+  tags:
+    - avinode_devenv_install_terragrunt
+
+- name: Ensure Zsh completions for Terragrunt
+  ansible.builtin.template:
+    dest: '{{ avinode_devenv_prefix }}/share/zsh/site-functions/_{{ _item }}'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0644'
+    owner: '{{ avinode_devenv_default_owner }}'
+    src: terragrunt-completion.zsh.j2
+  vars:
+    terraform_executable_file: '{{ install_terragrunt_terraform_bin }}'
+    terragrunt_name: '{{ _item }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ _install_terragrunt_present_symlink_names }}'
+  loop_control:
+    loop_var: _item
+  tags:
+    - avinode_devenv_install_terragrunt
+...

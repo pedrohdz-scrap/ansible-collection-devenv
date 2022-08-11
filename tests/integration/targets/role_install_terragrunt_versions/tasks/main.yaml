@@ -1,0 +1,230 @@
+---
+# - name: Ensure required tools are installed on Debian OS family.
+#   ansible.builtin.apt:
+#     cache_valid_time: 86400  # 24 hours
+#     name: [golang, git]
+#     state: present
+#     update_cache: true
+#   ignore_errors: true
+#   become: true
+#   when: ansible_os_family == 'Debian'
+
+- name: Ensure required tools are installed on MacOS via MacPorts.
+  community.general.macports:
+    name: [go, git]
+    state: present
+    selfupdate: false
+  failed_when: false
+  become: true
+  when: ansible_os_family == 'Darwin'
+
+- name: Testing 'avinode.devenv.install_terragrunt_versions'
+  block:
+    # -------------------------------------------------------------------------
+    # Arrange
+    # -------------------------------------------------------------------------
+    - name: Create temporary test directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: .install-terragrunt-integration-tests
+      register: _tmp_test_dir
+    - name: Override installation directory to test area
+      ansible.builtin.set_fact:
+        avinode_devenv_prefix: '{{ _tmp_test_dir.path }}'
+    - name: Include/run avinode.devenv.baseline
+      ansible.builtin.include_role:
+        name: avinode.devenv.baseline
+
+    # -------------------------------------------------------------------------
+    # Test empty install
+    # -------------------------------------------------------------------------
+    - name: Executing `install_terragrunt_versions` using defaults, nothing should happen
+      ansible.builtin.include_role:
+        name: avinode.devenv.install_terragrunt_versions
+
+    - name: Assert no files created/installed on empty run
+      ansible.builtin.find:
+        paths: '{{ _tmp_test_dir.path }}/{{ _check_installed_files_item }}'
+        recurse: false
+        file_type: any
+      register: _check_installed_files
+      failed_when: (_check_installed_files.files | length) > 0
+      loop: [bin, etc/bash_completion.d, share/zsh/site-functions]
+      loop_control:
+        loop_var: _check_installed_files_item
+
+    # -------------------------------------------------------------------------
+    # Test install
+    # -------------------------------------------------------------------------
+    - name: Executing `install_terragrunt_versions` to test installs
+      ansible.builtin.include_role:
+        name: avinode.devenv.install_terragrunt_versions
+      vars:
+        install_terragrunt_versions:
+          absent: []
+          absent_symlinks: []
+          installed:
+            - '0.34.1'
+            - '0.35.6'
+            - '0.38.7'
+          symlinks:
+            terragrunt0.34: '0.34.1'
+            terragrunt0.35: '0.35.6'
+            terragrunt0.38: '0.38.7'
+            terragrunt: '0.38.7'
+
+    - name: Test installed Terragrunt executables.
+      ansible.builtin.command:
+        cmd: '{{ _tmp_test_dir.path }}/bin/{{ _install_check_item.key }} --version'
+      changed_when: false
+      failed_when: _install_check_item.value not in _ver_check.stdout
+      register: _ver_check
+      loop_control:
+        loop_var: _install_check_item
+      loop: '{{ _cmd_versions | dict2items }}'
+      vars:
+        _cmd_versions:
+          terragrunt0.34.1: '0.34.1'
+          terragrunt0.34: '0.34.1'
+          terragrunt0.35.6: '0.35.6'
+          terragrunt0.35: '0.35.6'
+          terragrunt0.38.7: '0.38.7'
+          terragrunt0.38: '0.38.7'
+          terragrunt: '0.38.7'
+
+    - name: Test that Bash completions can be sourced.
+      ansible.builtin.command:
+        cmd: '/bin/bash -c "source {{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ _completion_check_item }}.sh"'
+      changed_when: false
+      loop_control:
+        loop_var: _completion_check_item
+      loop:
+        - terragrunt0.34.1
+        - terragrunt0.34
+        - terragrunt0.35.6
+        - terragrunt0.35
+        - terragrunt0.38.7
+        - terragrunt0.38
+        - terragrunt
+
+    - name: Test that Zsh completions can be sourced.
+      ansible.builtin.command:
+        cmd: '/bin/zsh -c "source {{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ _completion_check_item }}"'
+      changed_when: false
+      loop_control:
+        loop_var: _completion_check_item
+      loop:
+        - terragrunt0.34.1
+        - terragrunt0.34
+        - terragrunt0.35.6
+        - terragrunt0.35
+        - terragrunt0.38.7
+        - terragrunt0.38
+        - terragrunt
+
+    # -------------------------------------------------------------------------
+    # Test uninstall
+    # -------------------------------------------------------------------------
+    - name: Executing `install_terragrunt_versions` to test uninstalls
+      ansible.builtin.include_role:
+        name: avinode.devenv.install_terragrunt_versions
+      vars:
+        install_terragrunt_versions:
+          absent: ['0.34.1']
+          absent_symlinks: ['terragrunt0.34']
+          installed:
+            - '0.35.6'
+            - '0.38.7'
+          symlinks:
+            terragrunt0.35: '0.35.6'
+            terragrunt0.38: '0.38.7'
+            terragrunt: '0.38.7'
+
+    - name: Test that the files for uninstalled versions have been deleted.
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/bin/{{ _uninstall_check_item }}'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop_control:
+        loop_var: _uninstall_check_item
+      loop:
+        - terragrunt0.34
+        - terragrunt0.34.1
+
+    - name: Test that the files for the other versions still exist.
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/bin/{{ _uninstall_check_item }}'
+      register: _test_file_stats
+      failed_when: |
+        not (_test_file_stats.stat.exists and _test_file_stats.stat.executable)
+      loop_control:
+        loop_var: _uninstall_check_item
+      loop:
+        - terragrunt0.35.6
+        - terragrunt0.35
+        - terragrunt0.38.7
+        - terragrunt0.38
+        - terragrunt
+
+    # ---- bash ----
+    - name: Test that Bash completion files have been removed
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ _completion_check_item }}.sh'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop_control:
+        loop_var: _completion_check_item
+      loop:
+        - terragrunt0.34
+        - terragrunt0.34.1
+
+    - name: Test that older Bash completion files still exist
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/etc/bash_completion.d/{{ _completion_check_item }}.sh'
+      register: _test_file_stats
+      failed_when: not _test_file_stats.stat.exists
+      loop_control:
+        loop_var: _completion_check_item
+      loop:
+        - terragrunt0.35.6
+        - terragrunt0.35
+        - terragrunt0.38.7
+        - terragrunt0.38
+        - terragrunt
+
+    # ---- Zsh ----
+    - name: Test that Zsh completion files have been removed
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ _completion_check_item }}'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop_control:
+        loop_var: _completion_check_item
+      loop:
+        - terragrunt0.34
+        - terragrunt0.34.1
+
+    - name: Test that older Zsh completion files still exist
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/share/zsh/site-functions/_{{ _completion_check_item }}'
+      register: _test_file_stats
+      failed_when: not _test_file_stats.stat.exists
+      loop_control:
+        loop_var: _completion_check_item
+      loop:
+        - terragrunt0.35.6
+        - terragrunt0.35
+        - terragrunt0.38.7
+        - terragrunt0.38
+        - terragrunt
+
+  always:
+    - name: Delete temporary test directory
+      ansible.builtin.file:
+        path: '{{ _tmp_test_dir.path }}'
+        state: absent
+  vars:
+    avinode_devenv_become_for_all: false
+    avinode_devenv_default_group: '{{ ansible_user_gid }}'
+    avinode_devenv_default_owner: '{{ ansible_user_id }}'
+...

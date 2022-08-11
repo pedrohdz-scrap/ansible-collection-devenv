@@ -1,0 +1,8 @@
+#compdef {{ terragrunt_name }}
+
+# WARNING - This file is managed by Ansible.  Local changes will be lost.
+
+autoload -U +X bashcompinit && bashcompinit
+autoload -Uz compinit && compinit
+
+complete -C '{{ terraform_executable_file }}' {{ terragrunt_name }}
