@@ -1,0 +1,127 @@
+---
+- name: Testing 'avinode.devenv.install_kube_score_versions'
+  block:
+    # -------------------------------------------------------------------------
+    # Arrange
+    # -------------------------------------------------------------------------
+    - name: Create temporary test directory
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: .install-kube-score-integration-tests
+      register: _tmp_test_dir
+    - name: Override installation directory to test area
+      ansible.builtin.set_fact:
+        avinode_devenv_prefix: '{{ _tmp_test_dir.path }}'
+    - name: Include/run avinode.devenv.baseline
+      ansible.builtin.include_role:
+        name: avinode.devenv.baseline
+
+    # -------------------------------------------------------------------------
+    # Test empty install
+    # -------------------------------------------------------------------------
+    - name: Executing `install_kube_score_versions` using defaults, nothing should happen
+      ansible.builtin.include_role:
+        name: avinode.devenv.install_kube_score_versions
+
+    - name: Assert no files created/installed on empty run
+      ansible.builtin.find:
+        paths: '{{ _tmp_test_dir.path }}/{{ _check_installed_files_item }}'
+        recurse: false
+        file_type: any
+      register: _check_installed_files
+      failed_when: (_check_installed_files.files | length) > 0
+      loop: [bin, etc/bash_completion.d, share/zsh/site-functions]
+      loop_control:
+        loop_var: _check_installed_files_item
+
+    # -------------------------------------------------------------------------
+    # Test install
+    # -------------------------------------------------------------------------
+    - name: Executing `install_kube_score_versions` to test installs
+      ansible.builtin.include_role:
+        name: avinode.devenv.install_kube_score_versions
+      vars:
+        install_kube_score_versions:
+          absent: []
+          absent_symlinks: []
+          installed:
+            - '1.11.0'
+            - '1.13.0'
+            - '1.14.0'
+          symlinks:
+            kube-score1.11: '1.11.0'
+            kube-score1.13: '1.13.0'
+            kube-score1.14: '1.14.0'
+            kube-score1: '1.14.0'
+            kube-score: '1.14.0'
+
+    - name: Test installed kube-score executables
+      ansible.builtin.command:
+        cmd: '{{ _tmp_test_dir.path }}/bin/{{ item.key }} version'
+      changed_when: false
+      failed_when: item.value not in _ver_check.stdout
+      register: _ver_check
+      loop: '{{ _cmd_versions | dict2items }}'
+      vars:
+        _cmd_versions:
+          kube-score1.11.0: '1.11.0'
+          kube-score1.11: '1.11.0'
+          kube-score1.13.0: '1.13.0'
+          kube-score1.13: '1.13.0'
+          kube-score1.14.0: '1.14.0'
+          kube-score1.14: '1.14.0'
+          kube-score1: '1.14.0'
+          kube-score: '1.14.0'
+
+    # -------------------------------------------------------------------------
+    # Test uninstall
+    # -------------------------------------------------------------------------
+    - name: Executing `install_kube_score_versions` to test uninstalls
+      ansible.builtin.include_role:
+        name: avinode.devenv.install_kube_score_versions
+      vars:
+        install_kube_score_versions:
+          absent: ['1.13.0']
+          absent_symlinks: ['kube-score1.13']
+          installed:
+            - '1.11.0'
+            - '1.14.0'
+          symlinks:
+            kube-score1.11: '1.11.0'
+            kube-score1.14: '1.14.0'
+            kube-score1: '1.14.0'
+            kube-score: '1.14.0'
+
+    - name: Test that the files for uninstalled versions have been deleted.
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      register: _test_file_stats
+      failed_when: _test_file_stats.stat.exists
+      loop:
+        - kube-score1.13
+        - kube-score1.13.0
+
+    - name: Test that the files for the other versions still exist.
+      ansible.builtin.stat:
+        path: '{{ _tmp_test_dir.path }}/bin/{{ item }}'
+      register: _test_file_stats
+      failed_when: |
+        not (_test_file_stats.stat.exists and _test_file_stats.stat.executable)
+      loop:
+        - kube-score
+        - kube-score1
+        - kube-score1.11
+        - kube-score1.11.0
+        - kube-score1.14
+        - kube-score1.14.0
+
+  always:
+    - name: Delete temporary test directory
+      ansible.builtin.file:
+        path: '{{ _tmp_test_dir.path }}'
+        state: absent
+  vars:
+    avinode_devenv_become_for_all: false
+    avinode_devenv_default_group: '{{ ansible_user_gid }}'
+    avinode_devenv_default_owner: '{{ ansible_user_id }}'
+...

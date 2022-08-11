@@ -1,0 +1,64 @@
+---
+#------------------------------------------------------------------------------
+# Remove requested items
+#------------------------------------------------------------------------------
+- name: Ensure kube-score versions absent
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/kube-score{{ _kube_score_item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_kube_score_versions.absent }}'
+  loop_control:
+    loop_var: _kube_score_item
+  when: install_kube_score_versions.absent is defined
+  tags:
+    - avinode_devenv_install_kube_score
+
+- name: Ensure kube-score symlinks absent
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/{{ _kube_score_item }}'
+    state: absent
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_kube_score_versions.absent_symlinks }}'
+  loop_control:
+    loop_var: _kube_score_item
+  when: install_kube_score_versions.absent_symlinks is defined
+  tags:
+    - avinode_devenv_install_kube_score
+
+
+#------------------------------------------------------------------------------
+# Install
+#------------------------------------------------------------------------------
+- name: Ensure kube-score{{ _version }} is installed
+  ansible.builtin.get_url:
+    checksum: sha256:https://github.com/zegl/kube-score/releases/download/v{{ _version }}/checksums.txt
+    dest: '{{ _bin_file }}'
+    group: '{{ avinode_devenv_default_group }}'
+    mode: '0755'
+    owner: '{{ avinode_devenv_default_owner }}'
+    url: https://github.com/zegl/kube-score/releases/download/v{{ _version }}/kube-score_{{ _version }}_{{ avinode_devenv_go_platform }}_{{ _arch }}
+  vars:
+    _arch: '{{ avinode_devenv_go_arch | first }}'
+    _bin_file: '{{ avinode_devenv_prefix }}/bin/kube-score{{ _kube_score_item }}'
+    _version: '{{ _kube_score_item }}'
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_kube_score_versions.installed }}'
+  loop_control:
+    loop_var: _kube_score_item
+  tags:
+    - avinode_devenv_install_kube_score
+
+- name: Ensure kube-score symlinks
+  ansible.builtin.file:
+    path: '{{ avinode_devenv_prefix }}/bin/{{ _kube_score_item.key }}'
+    src: '{{ avinode_devenv_prefix }}/bin/kube-score{{ _kube_score_item.value }}'
+    state: link
+  become: '{{ avinode_devenv_become_for_all }}'
+  loop: '{{ install_kube_score_versions.symlinks | dict2items }}'
+  loop_control:
+    loop_var: _kube_score_item
+  when: install_kube_score_versions.symlinks is defined
+  tags:
+    - avinode_devenv_install_kube_score
+...

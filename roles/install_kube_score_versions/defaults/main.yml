@@ -1,0 +1,15 @@
+---
+install_kube_score_versions:
+  absent: []
+    # - '1.8.0'
+  absent_symlinks: []
+    # kube-score1.8
+  installed: []
+    # - '1.14.0'
+    # - '1.11.0'
+  symlinks: {}
+    # kube-score1.14: '1.14.0'
+    # kube-score1.11: '1.11.0'
+    # kube-score1: '1.14.0'
+    # kube-score: '1.14.0'
+...
