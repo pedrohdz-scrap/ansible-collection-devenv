@@ -1,3 +1,5 @@
+BUILD_RAND_NAME ?= $(shell tr -dc a-z0-9 </dev/urandom | head -c 13)
+
 IMAGE_DEBIAN10 := geerlingguy/docker-debian10-ansible:latest
 IMAGE_DEBIAN10_PYTHON := 3.7
 IMAGE_DEBIAN11 := geerlingguy/docker-debian11-ansible:latest
@@ -71,7 +73,7 @@ super-linter:
 			--env PYTHONPATH=/tmp/lint/.venv/lib/python3.8/site-packages \
 			--env VALIDATE_GITHUB_ACTIONS=false \
 			--volume $$PWD:/tmp/lint \
-			--name ansible-playbooks-avinode-super-linter \
+			--name ansible-playbooks-avinode-super-linter-$(BUILD_RAND_NAME) \
 			github/super-linter:slim-v4
 
 
